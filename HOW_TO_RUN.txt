@@ -1,0 +1,12 @@
+1. python3 sql_synthesis/generate_sql_synthesis_prompts.py --num-dbs 120 --prompts-per-db 150 ++++
+2. python3 sql_synthesis/synthesize_sql.py --model Qwen/Qwen3.5-2B --batch_size 1 --max_new_tokens 4096 ++++
+3. python3 sql_synthesis/post_process_sqls.py
+
+4. python3 question_synthesis/generate_question_synthesis_prompts.py
+5. python3 question_synthesis/synthesize_question.py
+6. python3 question_synthesis/post_process_questions.py
+
+7. python3 cot_synthesis/generate_cot_synthesis_prompts.py
+8. pythin3 cot_synthesis/synthesize_cot.py
+9. python3 cot_synthesis/post_process_cot.py
+

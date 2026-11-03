@@ -1,0 +1,2 @@
+/database_synthesis/synthetic_sqlite_databases.json filter=lfs diff=lfs merge=lfs -text
+/sql_synthesis/prompts/sql_synthesis_prompts.json filter=lfs diff=lfs merge=lfs -text
