@@ -1,6 +1,13 @@
+# First of all
+
+That's an old README from the original source. Will be updated later
+
+
+
 # Web Table-Driven Database Synthesis
 
 This is the first step in our data synthesis framework, designed to generate realistic databases using web tables.
+If you already have databases sample, you can skip this step.
 
 ## Prepare Web Tables
 Unzip `web_tables.json.zip` to access 19,935 high-quality web tables from [Tablib](https://arxiv.org/pdf/2310.07875).

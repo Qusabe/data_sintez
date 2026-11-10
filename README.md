@@ -1,3 +1,8 @@
+# First of all
+
+That's an old README from the original source. Will be updated later
+
+
 # Data Synthesis Framework
 
 This directory contains the source code and prompts for our data synthesis framework.

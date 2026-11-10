@@ -1,27 +1,3 @@
-# =====================================================================================
-# CHANGE LOG (changed/added places are tagged "# [CHANGE n]"):
-#   [CHANGE 1] SELECT-only filter removed. filter_select_sqls() is no longer called; every
-#              statement type (SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, ...) stays.
-#              KEEP_STATEMENT_TYPES lets you restrict types again if you ever want to.
-#   [CHANGE 2] get_statement_type(): reliable detection of the statement type (also handles
-#              comments and WITH ... INSERT/UPDATE/DELETE). Saved as "statement_type".
-#   [CHANGE 3] execute_sql() rewritten so non-SELECT statements count as valid. The original
-#              crashed on len(cursor.description) (it is None for INSERT/UPDATE/DELETE/DDL)
-#              and the statement was silently dropped in the "remove timeout sqls" stage.
-#   [CHANGE 4] Safety: the original databases are opened READ-ONLY. Statements that modify
-#              data/schema run on an in-memory COPY, so the real .sqlite files can never be
-#              changed (and parallel workers can't block each other with write locks).
-#              Statements that cannot be run in a transaction (VACUUM, ATTACH, DETACH,
-#              BEGIN/COMMIT/ROLLBACK/SAVEPOINT/RELEASE) are only compiled, never executed.
-#   [CHANGE 5] Output records get new fields: "statement_type", "requested_statement_type"
-#              (what synthesize_sql.py asked for), "affected_rows" (for INSERT/UPDATE/DELETE).
-#              Existing fields keep their meaning; for non-SELECT, column_count is 0.
-#   [CHANGE 6] Per-statement-type counts are printed after every filtering stage, so you can
-#              see that nothing is dropped because of its type.
-#   [CHANGE 7] Small robustness fixes (empty-SQL return value, empty-result guard, missing
-#              database no longer silently creates an empty .sqlite file).
-# =====================================================================================
-
 import json
 import sqlite3
 import os
@@ -35,10 +11,10 @@ from func_timeout import func_timeout, FunctionTimedOut
 import multiprocessing as mp
 import ijson
 
-# [CHANGE 1] None = keep every statement type. Example of restricting: {"SELECT", "UPDATE"}
+# None = keep every statement type. Example of restricting: {"SELECT", "UPDATE"}
 KEEP_STATEMENT_TYPES = None
 
-# [CHANGE 2] ---- statement type detection ------------------------------------------------
+# --------------- statement type detection ------------------------------------------------
 # Tokenizer that understands comments and quoted strings/identifiers, so that e.g. a
 # comment before the statement or the word "update" inside a string cannot fool the detection.
 _TOKEN_RE = re.compile(
@@ -98,7 +74,7 @@ def get_statement_type(sql):
     return _TYPE_MAP.get(first, "OTHER")
 
 
-# [CHANGE 4] ---- how each type is executed ---------------------------------------------
+# --------------- how each type is executed ---------------------------------------------
 READ_ONLY_TYPES = {"SELECT", "EXPLAIN"}  # run directly on a read-only connection
 COMPILE_ONLY_TYPES = {  # cannot be run inside a transaction -> only compiled with EXPLAIN
     "VACUUM", "ATTACH", "DETACH", "BEGIN", "COMMIT", "ROLLBACK", "SAVEPOINT", "RELEASE",
@@ -178,7 +154,7 @@ def execute_sql(sql, db_path, statement_type=None):
             conn.close()
 
 
-# [CHANGE 3/5] extra arguments: statement_type, requested_statement_type
+# extra arguments: statement_type, requested_statement_type
 def execute_wrapper(sample_idx, db_id, sql, complexity, timeout, db_dir, statement_type=None,
                     requested_statement_type=None):
     try:
@@ -250,7 +226,7 @@ def analyze_complexity(results):
     print(complexity2num)
 
 
-# [CHANGE 6] how many statements of each type are left after a stage
+# how many statements of each type are left after a stage
 def analyze_statement_types(results):
     type2num = dict()
     for res in results:
@@ -346,7 +322,7 @@ def filter_select_sqls(synthesized_sqls):
     return select_sqls
 
 
-# [CHANGE 1] replacement for filter_select_sqls(): keeps everything unless KEEP_STATEMENT_TYPES is set
+# replacement for filter_select_sqls(): keeps everything unless KEEP_STATEMENT_TYPES is set
 def filter_statement_types(synthesized_sqls, keep_types=None):
     if keep_types is None:
         return synthesized_sqls
@@ -354,7 +330,7 @@ def filter_statement_types(synthesized_sqls, keep_types=None):
 
 
 def dedup_using_query_plan(synthesized_sqls):
-    # NOTE [CHANGE 1]: do not enable this for non-SELECT statements. INSERT/DDL statements
+    # NOTE: do not enable this for non-SELECT statements. INSERT/DDL statements
     # have an (almost) empty query plan, so they would all collapse into a few samples.
     unique_plans = set()
     deduped_sqls = []
@@ -461,7 +437,7 @@ if __name__ == "__main__":
 
     analyze_statement_types(synthesized_sqls)  # [CHANGE 6]
 
-    # [CHANGE 1] the SELECT-only filter was here. Now all statement types are kept
+    # the SELECT-only filter was here. Now all statement types are kept
     # (unless you set KEEP_STATEMENT_TYPES at the top of the file).
     synthesized_sqls = filter_statement_types(synthesized_sqls, KEEP_STATEMENT_TYPES)
     print("sql num after statement-type filter (keeps all types by default):", len(synthesized_sqls))

@@ -7,20 +7,6 @@ import numpy as np
 
 from tqdm import tqdm
 
-# =====================================================================================
-# CHANGE LOG (every modified/added place below is tagged with "# [CHANGE n]"):
-#   [CHANGE 1] Number of databases is controlled via --num-dbs (random, reproducible).
-#   [CHANGE 2] Prompts per database is controlled via --prompts-per-db (was hard-coded 300).
-#   [CHANGE 3] SELECT-only restriction removed: SELECT / INSERT / UPDATE / DELETE are
-#              supported and picked at random per prompt (restrict with --statement-types).
-#   [CHANGE 4] Template placeholders {statement_type}, {statement_type_desc} and
-#              {column_requirement} are now filled in (before, this caused a KeyError).
-#   [CHANGE 5] Databases with no tables are skipped.
-#   [CHANGE 6] numpy RNG is seeded too, and the output folder is created automatically.
-#   [CHANGE 7] Each output record also stores statement_type and complexity.
-#   [CHANGE 8] Paths and seed moved from hard-coded values to command-line arguments.
-# =====================================================================================
-
 sql_func_template = '''
 ### SQL Functions
 You may consider one or more of the following SQL functions while generating the query:
@@ -137,7 +123,7 @@ INNER JOIN DepartmentStats dstat ON ds.department_id = dstat.department_id
 ORDER BY ds.level, ds.name;
 ```'''
 
-# [CHANGE 3] Statement types. The text values are my own wording - edit freely.
+# Statement types. The text values are my own wording - edit freely.
 # The complexity criteria above are written with SELECT queries in mind, so for the
 # data-modifying types a short note tells the model how to apply them.
 non_select_complexity_note = (
@@ -167,7 +153,7 @@ statement_type2desc = {
 }
 
 
-# [CHANGE 3] The old script always asked for "column_count" columns, which only makes
+# The old script always asked for "column_count" columns, which only makes
 # sense for SELECT. This builds a requirement sentence appropriate for each type.
 def build_column_requirement(statement_type, column_count):
     if statement_type == "SELECT":
@@ -233,7 +219,7 @@ def obtain_insert_statements(db_file_dir, table_names):
     return table_name2insert_statements
 
 
-# [CHANGE 8] Command-line arguments replace the hard-coded paths/values.
+#  Command-line arguments replace the hard-coded paths/values.
 def parse_args():
     p = argparse.ArgumentParser(description="Generate SQL-synthesis prompts from SQLite databases.")
     p.add_argument("--db-path", default="database_synthesis/sinthetic_sqlite_databases",
@@ -241,13 +227,13 @@ def parse_args():
     p.add_argument("--template", default="sql_synthesis/prompt_templates/sql_synthesis_prompt.txt")
     p.add_argument("--funcs", default="sql_synthesis/prompt_templates/sqlite_funcs.json")
     p.add_argument("--output", default="sql_synthesis/prompts/sql_synthesis_prompts.json")
-    # [CHANGE 1] how many databases to use (None = all of them)
+    # how many databases to use (None = all of them)
     p.add_argument("--num-dbs", type=int, default=None,
                    help="Number of databases to use (randomly chosen). Default: all.")
-    # [CHANGE 2] how many prompts per database (original value was 300)
+    # how many prompts per database (original value was 300)
     p.add_argument("--prompts-per-db", type=int, default=300,
                    help="Number of prompts generated for each database. Default: 300.")
-    # [CHANGE 3] which statement types to generate
+    # which statement types to generate
     p.add_argument("--statement-types", nargs="+", default=list(statement_type2desc.keys()),
                    choices=list(statement_type2desc.keys()),
                    help="Statement types to sample from. Default: SELECT INSERT UPDATE DELETE.")
@@ -259,7 +245,7 @@ if __name__ == "__main__":
     args = parse_args()
 
     random.seed(args.seed)
-    np.random.seed(args.seed)  # [CHANGE 6] the original seeded only `random`, not numpy
+    np.random.seed(args.seed)  #  the original seeded only `random`, not numpy
 
     db_path = "database_synthesis/sinthetic_sqlite_databases"
     prompt_template = open(args.template, "r", encoding="utf-8").read()
@@ -272,7 +258,7 @@ if __name__ == "__main__":
         "Highly Complex": highly_complex_criterion
     }
 
-    # [CHANGE 1] Shuffle (reproducibly) and walk through the databases until `num_dbs`
+    #  Shuffle (reproducibly) and walk through the databases until `num_dbs`
     # usable ones have been processed. Sorting first makes the result independent of
     # the order in which the OS lists the folders.
     db_names = sorted(os.listdir(db_path))
@@ -289,16 +275,16 @@ if __name__ == "__main__":
             db_file_dir = os.path.join(db_path, db_name, db_name + ".sqlite")
             table_names, create_statements = obtain_db_schema(db_file_dir)
 
-            # [CHANGE 5] skip databases that contain no tables (they would give empty schemas)
+            # skip databases that contain no tables (they would give empty schemas)
             if len(table_names) == 0:
                 continue
 
             table_name2insert_statements = obtain_insert_statements(db_file_dir, table_names)
 
-            for _ in range(0, args.prompts_per_db):  # [CHANGE 2] was: range(0, 300)
+            for _ in range(0, args.prompts_per_db):  #  was: range(0, 300)
                 complexity = random.sample(["Simple", "Moderate", "Complex", "Highly Complex"], 1)[0]
 
-                # [CHANGE 3] pick the statement type (was implicitly always SELECT)
+                #  pick the statement type (was implicitly always SELECT)
                 statement_type = random.choice(args.statement_types)
 
                 insert_statements = []
@@ -335,7 +321,7 @@ if __name__ == "__main__":
                     column_requirement=build_column_requirement(statement_type, column_count)  # [CHANGE 4]
                 )
 
-                # [CHANGE 7] store statement_type and complexity next to the prompt
+                #  store statement_type and complexity next to the prompt
                 prompts.append({
                     "prompt": prompt,
                     "db_id": db_name,
@@ -351,7 +337,7 @@ if __name__ == "__main__":
 
     print(f"Used {used_dbs} databases, generated {len(prompts)} prompts.")
 
-    # [CHANGE 6] create the output folder if it doesn't exist yet
+    #  create the output folder if it doesn't exist yet
     os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(json.dumps(prompts, indent=2, ensure_ascii=False))

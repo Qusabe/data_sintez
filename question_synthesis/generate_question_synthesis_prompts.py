@@ -1,18 +1,3 @@
-# =====================================================================================
-# CHANGE LOG (changed/added places are tagged "# [CHANGE n]"):
-#   [CHANGE 1] get_statement_type(): the statement type (SELECT / INSERT / UPDATE / DELETE /
-#              CREATE / DROP / ALTER / ...) is read from the "statement_type" field written by
-#              post_process_sqls.py, or detected here when the field is missing.
-#   [CHANGE 2] Statement-specific guidelines. The original guidelines talk about "columns being
-#              selected", ORDER BY and LIMIT, which makes no sense for INSERT/UPDATE/DELETE/DDL.
-#              SELECT prompts are IDENTICAL to the original ones; other types get fitting
-#              guidelines, and the question is phrased as a request ("Add...", "Remove...").
-#   [CHANGE 3] Column information is now table-aware where the SQL alone doesn't name the
-#              columns: INSERT without a column list, DROP TABLE, ALTER TABLE.
-#   [CHANGE 4] Databases are opened read-only (a wrong path no longer creates an empty
-#              .sqlite file), and the output folder is created automatically.
-#   [CHANGE 5] "statement_type" is saved in every output record; statistics are printed.
-# =====================================================================================
 
 import json
 import os
@@ -191,7 +176,7 @@ def get_statement_type(sql):
     return _TYPE_MAP.get(first, "OTHER")
 
 
-# [CHANGE 2] ---- guidelines for statements that are not SELECT ---------------------------------
+# -------- guidelines for statements that are not SELECT ---------------------------------
 # "{target}" is replaced by "natural language question" or "conversation" (multi-turn style).
 non_select_guidelines = {
     "INSERT": (
@@ -251,7 +236,7 @@ def build_guidelines(statement_type, style_name):
 
 
 def obtain_db_schema(db_file_dir):
-    # [CHANGE 4] read-only: sqlite3.connect(path) would silently CREATE an empty database for a wrong path
+    # read-only: sqlite3.connect(path) would silently CREATE an empty database for a wrong path
     conn = sqlite3.connect(Path(db_file_dir).resolve().as_uri() + "?mode=ro", uri=True)
     cursor = conn.cursor()
 
@@ -271,7 +256,7 @@ def obtain_db_schema(db_file_dir):
     return table_names, create_statements
 
 
-# NOTE: When columns with the same names exist in different tables, more detailed design considerations are necessary
+#  When columns with the same names exist in different tables, more detailed design considerations are necessary
 def extract_column_descriptions(create_statements):
     column_name2column_desc = dict()
     # Regular expression to match column definitions
@@ -290,7 +275,7 @@ def extract_column_descriptions(create_statements):
     return column_name2column_desc
 
 
-# [CHANGE 3] ---- table-aware column information ----------------------------------------------
+# ------------- table-aware column information ----------------------------------------------
 _COLUMN_RE = r'"(\w+)"\s+\w+\s*/\*\s*(.*?)\s*\*/'
 _CREATE_TABLE_RE = re.compile(r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"\[]?(\w+)[`"\]]?\s*\(', re.IGNORECASE)
 _INSERT_RE = re.compile(
@@ -332,7 +317,7 @@ def build_used_columns(sql, statement_type, column_name2column_desc, table2colum
         if column_name.lower() in sql_lower:
             used[column_name] = column_desc
 
-    # [CHANGE 3] statements that don't name their columns need the columns of the tables they touch
+    #  statements that don't name their columns need the columns of the tables they touch
     tables = []
     if statement_type == "INSERT":
         target, explicit_columns = insert_target(sql)
@@ -353,25 +338,25 @@ if __name__ == "__main__":
     styles = ["Formal", "Colloquial", "Imperative", "Interrogative", "Descriptive", "Concise", "Vague", "Metaphorical",
               "Multi-turn Dialogue"]
 
-    if sql_infos:  # [CHANGE 5] guard against an empty input file
+    if sql_infos:  #guard against an empty input file
         print(sql_infos[0])
     db_ids = list(set([sql["db_id"] for sql in sql_infos]))
     print(len(db_ids))
 
     db_id2column_info = dict()
-    db_id2table_info = dict()  # [CHANGE 3]
+    db_id2table_info = dict()
     for db_id in tqdm(db_ids):
         table_names, create_statements = obtain_db_schema(os.path.join(db_path, db_id, db_id + ".sqlite"))
         db_id2column_info[db_id] = extract_column_descriptions(create_statements)
-        db_id2table_info[db_id] = extract_table_column_descriptions(create_statements)  # [CHANGE 3]
+        db_id2table_info[db_id] = extract_table_column_descriptions(create_statements)
 
     prompts = []
     for sql_info in tqdm(sql_infos):
         style_name = random.sample(styles, 1)[0]
         column_name2column_desc = db_id2column_info[sql_info["db_id"]]
-        # [CHANGE 1] statement type from post_process_sqls.py (or detected here)
+        # statement type from post_process_sqls.py
         statement_type = sql_info.get("statement_type") or get_statement_type(sql_info["sql"])
-        # [CHANGE 3] same result as the original loop for SELECT; table-aware for INSERT/DROP/ALTER
+        # same result as the original loop for SELECT; table-aware for INSERT/DROP/ALTER
         used_column_name2column_desc = build_used_columns(
             sql_info["sql"], statement_type, column_name2column_desc, db_id2table_info[sql_info["db_id"]]
         )
@@ -392,7 +377,7 @@ if __name__ == "__main__":
             instruction = instruction_wo_ek
             output_format = output_format_wo_ek
 
-        # [CHANGE 2] SELECT: original guidelines (unchanged); other statement types: statement-specific guidelines
+        # \SELECT: original guidelines (unchanged); other statement types: statement-specific guidelines
         guidelines = build_guidelines(statement_type, style_name)
 
         prompt = question_synthesis_template.format(
@@ -407,15 +392,15 @@ if __name__ == "__main__":
         )
 
         sql_info["style"] = style_name
-        sql_info["statement_type"] = statement_type  # [CHANGE 5]
+        sql_info["statement_type"] = statement_type
         sql_info["prompt"] = prompt
 
-    # [CHANGE 5] overview of what was generated
+    #overview of what was generated
     type_counts = dict()
     for sql_info in sql_infos:
         type_counts[sql_info["statement_type"]] = type_counts.get(sql_info["statement_type"], 0) + 1
     print("prompts per statement type:", dict(sorted(type_counts.items(), key=lambda kv: -kv[1])))
 
-    os.makedirs("question_synthesis/prompts", exist_ok=True)  # [CHANGE 4]
-    with open("question_syntesis/prompts/question_synthesis_prompts.json", "w", encoding="utf-8") as f:
+    os.makedirs("question_synthesis/prompts", exist_ok=True)
+    with open("question_synthesis/prompts/question_synthesis_prompts.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(sql_infos, indent=2, ensure_ascii=False))
