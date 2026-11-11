@@ -6,6 +6,14 @@ Since I used original databases from OmniSQL repository, I skipped the step of g
   
 Parameters values that are shown has been used by me in my test runs on my local PC, so you should to change them accordingly to your tasks, desires and specs of your machine that would be running the code.
 
+## Stage 0: Installing the requirments
+
+To being able to run this projects smoothly, make sure that you have all necessary requirments:
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Stage 1: SQL synthesis
 
 ### 1. Generate SQL synthesis prompts
