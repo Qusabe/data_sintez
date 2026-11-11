@@ -1,8 +1,4 @@
-# First of all
-
-That's an old README from the original source. Will be updated later
-
-
+\
 # Chain-of-Thought Solution Synthesis
 
 This is the final step in data synthesis framework, focused on generating step-by-step chain-of-thought (CoT) solutions

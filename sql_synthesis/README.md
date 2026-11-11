@@ -1,12 +1,7 @@
-# First of all
-
-That's an old README from the original source. Will be updated later
-
-
 
 # Complexity-Aware SQL Query Generation
 
-This is the second step in our data synthesis framework, focused on generating complexity-aware SQL queries based on synthetic databases.
+This is the second step in  data synthesis framework, focused on generating complexity-aware SQL queries based on synthetic databases.
 
 ## Step 1: SQL Query Generation
 

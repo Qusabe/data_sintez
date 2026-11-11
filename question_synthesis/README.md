@@ -1,6 +1,4 @@
-# First of all
 
-That's an old README from the original source. Will be updated later
 
 # Stylized Natural Language Question Synthesis
 

@@ -1,7 +1,10 @@
 # First of all
 
-That's an old README from the original source. Will be updated later
+README's have not been updated fully. Read cautiously. You still can run into updated descriptions. It's a modification of OmniSQL framework
 
+# Running pipeline
+
+I recommend you to check HOW_TO_RUN.md file to get to know how to use this version of framework and my comments on it.
 
 # Data Synthesis Framework
 

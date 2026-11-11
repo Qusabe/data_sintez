@@ -2,6 +2,8 @@
 
 The pipeline has three stages: SQL synthesis, question synthesis, and chain-of-thought (CoT) synthesis. Each stage generates prompts, runs the model, and post-processes the results.  
   
+Since I used original databases from OmniSQL repository, I skipped the step of generating the databases. I recommend you to skip it too by now and to use original databases too, since I can't guarantee you th stable work of this step with other modified steps of the framework yet.
+  
 Parameters values that are shown has been used by me in my test runs on my local PC, so you should to change them accordingly to your tasks, desires and specs of your machine that would be running the code.
 
 ## Stage 1: SQL synthesis
