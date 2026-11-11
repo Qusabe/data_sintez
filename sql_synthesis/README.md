@@ -12,7 +12,15 @@ This is the second step in our data synthesis framework, focused on generating c
 
 Generate SQL queries by leveraging database schemas, database values, query complexity, and SQLite-supported functions.
 
-1. Execute `python3 generate_sql_synthesis_prompts.py` to create prompts for SQL query generation.
+1. Execute `python3 generate_sql_synthesis_prompts.py` to create prompts for SQL query generation. Additional arguments:
+   - --db-path - Folder containing the databases, each as <db_name>/<db_name>,sqlite. Default: database_synthesis/sinthetic_sqlite_databases
+   - --template - Text file with the prompt template. It is filled in with the schema, example rows, SQL functions, statement type, complexity criteria, and so on. Default: sql_synthesis/prompt_templates/sql_synthesis_prompt.txt
+   - --funcs - JSON list of SQLite function descriptions. Prompts randomly include 0 to 2 of them as hints. Default: sql_synthesis/prompt_templates/sqlite_funcs.json 
+   - --output - where the prompts are saved. The folder is created automatically. Default: sql_synthesis/prompts/sql_synthesis_prompts.json
+   - --num-dbs -- Number of databases to use. They are chosen randomly (reproducibly, via the seed). Databases with no tables are skipped and do not count toward this number.
+   - --prompts-per-db - Number of prompts generated for each databse. Default: 300
+   - --statement-types - One or more statement types to sample from, for example --statement-types SELECT UPDATE. For each prompt one type is picked at random. Default: SELECT INSERT UPDATE DELETE
+   - --seed - Seeds both random and numpy, so the same arguments produce the ssame databse selection and the same prompts. Default: 42
 2. Run `python3 synthesize_sql.py` to generate SQL queries using LLMs.
 Additional arguments:
    - --model - defines AI model that would be used. By default is Qwen3.5-2B
