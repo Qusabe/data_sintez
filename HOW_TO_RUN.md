@@ -92,3 +92,12 @@ python3 cot_synthesis/synthesize_cot.py
 python3 cot_synthesis/post_process_cot.py
 ```
 
+## Stage 4: Translation of CoT and Questions
+### 10. Translating dataset
+
+```bash
+python translate_dataset cot_synthesis/results/synthetic_text2sql_dataset.json -t ru --model pfnet/plamo-3-translate-8b
+```
+
+## Stage 5: Taking the results
+You can find final dataset in dataset_translation/results/synthetic_text2sql_dataset_ru.json

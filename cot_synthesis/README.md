@@ -1,7 +1,7 @@
 \
 # Chain-of-Thought Solution Synthesis
 
-This is the final step in data synthesis framework, focused on generating step-by-step chain-of-thought (CoT) solutions
+This is the fourth step in data synthesis framework, focused on generating step-by-step chain-of-thought (CoT) solutions
 
 ## Step 1: Chain-of-Thought Generation
 
