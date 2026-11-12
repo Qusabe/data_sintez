@@ -1,6 +1,6 @@
 # First of all
 
-README's have not been updated fully. Read cautiously. You still can run into updated descriptions. It's a modification of OmniSQL framework
+README's have not been updated fully. Read cautiously. You still can run into unupdated descriptions. It's a modification of OmniSQL framework
 
 # Running pipeline
 
